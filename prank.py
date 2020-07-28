@@ -83,7 +83,8 @@ class PRank(nn.Module):
 
     def get_embeddings(self):
         # return self.in_embed.weight.data.cpu().numpy() + self.out_embed.weight.data.cpu().numpy()
-        return self.in_embed.weight.data.cpu().numpy()
+        # return self.in_embed.weight.data.cpu().numpy()
+        return self.in_embed.data.cpu().numpy()
 
 def dot_product(x, y):
     # x: N * D
