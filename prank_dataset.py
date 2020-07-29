@@ -57,7 +57,7 @@ class PRank_Dataset:
         for i in range(bias_number):
             k_temp =( (i+1.0) / bias_number) * target_number - 1
             k_temp = int(k_temp + 0.5)
-            k[i] = k_temp
+            k[i+1] = k_temp
         for i in range(target_number):
             for level, value in k.items():
                 if i <= value:

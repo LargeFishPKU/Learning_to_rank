@@ -32,10 +32,12 @@ def train_save(batch_size, embed_size, bias_number, iterations, save_embedding_p
     for i in range(iterations):
         print("{} / {}".format(i, iterations), flush=True)
         len_dataload = len(dataload)
+        avg_acc = 0.0
         for j, (context_id, target_ids, labels) in enumerate(dataload):
-            if j % 1000 == 0:
-                print("sub: {} / {}".format(j, len_dataload), flush = True)
-            model(context_id, target_ids, labels)
+            acc = model(context_id, target_ids, labels)
+            avg_acc = avg_acc + acc
+            if j % 100 == 0:
+                print("sub: {} / {}, accuracy : {:.2f}%".format(j, len_dataload, avg_acc / (j + 1) * 100), flush = True)
 
     # save embeddings:
     print("training process is done")
@@ -43,8 +45,24 @@ def train_save(batch_size, embed_size, bias_number, iterations, save_embedding_p
     if not os.path.isdir(save_embedding_path):
         os.makedirs(save_embedding_path)
     embedings = model.get_embeddings()
+
+    # save the data as the numpy form:
     file_path = os.path.join(save_embedding_path, 'embeddings.npy')
     np.save(file_path, embedings)
+    # save the data as the txt form:
+    file_path = os.path.join(save_embedding_path, 'embeddings.txt')
+    with open(file_path, 'w') as f:
+        number_word = len(embedings)
+        for i in range(number_word):
+            line_i = embedings[i]
+            temp = ""
+            for j, value in enumerate(line_i):
+                if j == 0:
+                    temp = temp + str(value)
+                else:
+                    temp = temp + ' ' + str(value)
+            temp = temp + '\n'
+            f.write(temp)
     print("done")
 
 if __name__ == '__main__':

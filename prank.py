@@ -58,6 +58,9 @@ class PRank(nn.Module):
         dots = dots.squeeze(0).unsqueeze(1).repeat(1, self.bias_number) #(batch_size, bias_number)
         dots_bias = dots - temp_bias
 
+        p_labels = self.predicted_labels(dots_bias)
+        acc = self.accuracy(p_labels, labels)
+
         yt = self.generate_yt(batch_size, self.bias_number, labels) #(batch, bias_number)
         judge_matrix = dots_bias * yt
 
@@ -71,6 +74,8 @@ class PRank(nn.Module):
         # self.in_bias.weight[context_id] = self.in_bias.weight[context_id] - bias_update
         self.in_embed[context_id] = self.in_embed[context_id] + weight_update
         self.in_bias[context_id] = self.in_bias[context_id] - bias_update
+    
+        return acc
 
     def generate_yt(self,batch_size, bias_number, labels):
         yt = torch.zeros(batch_size, bias_number)
@@ -80,6 +85,34 @@ class PRank(nn.Module):
             yt[i, :label] = 1
         yt = yt.cuda()
         return yt
+
+    def predicted_labels(self, dots_bias):
+        p_labels = []
+        zeros = torch.zeros(dots_bias.size(0), dots_bias.size(1))
+        zeros = zeros.cuda()
+        temp_dots = torch.where(dots_bias < 0, zeros, dots_bias)
+        batch_size = temp_dots.size(0)
+        for i in range(batch_size):
+            flag = -1
+            for j in range(self.bias_number):
+                if temp_dots[i][j] == 0:
+                    flag = j
+                    break
+            if flag != -1:
+                p_labels.append(flag + 1)
+            else:
+                p_labels.append(self.bias_number + 1)
+        p_labels = torch.tensor(p_labels)
+        p_labels = p_labels.cuda()
+        return p_labels
+
+    def accuracy(self, p_labels, labels):
+        batch_size = p_labels.size(0)
+        p_labels = p_labels.cpu().numpy()
+        labels = labels.cpu().numpy()
+        correct = np.sum(p_labels == labels)
+        acc = correct * 1.0 / batch_size
+        return acc
 
     def get_embeddings(self):
         # return self.in_embed.weight.data.cpu().numpy() + self.out_embed.weight.data.cpu().numpy()
