@@ -15,6 +15,9 @@ id_value = os.path.join(data_dir, "id_value.dat")
 # training process of
 def train_save(batch_size, embed_size, bias_number, iterations, save_embedding_path):
     # get the dataset and the number of words
+    embed_size = int(embed_size)
+    bias_number = int(bias_number)
+    iterations = int(iterations)
     print("prepare the dataset ...")
     dataset = PRank_Dataset(id2voc, id_cooccur, id_value, batch_size, bias_number)
     word_number = dataset.get_word_number()
@@ -36,7 +39,7 @@ def train_save(batch_size, embed_size, bias_number, iterations, save_embedding_p
         for j, (context_id, target_ids, labels) in enumerate(dataload):
             acc = model(context_id, target_ids, labels)
             avg_acc = avg_acc + acc
-            if j % 100 == 0:
+            if j % 1000 == 0:
                 print("sub: {} / {}, accuracy : {:.2f}%".format(j, len_dataload, avg_acc / (j + 1) * 100), flush = True)
 
     # save embeddings:
@@ -47,10 +50,11 @@ def train_save(batch_size, embed_size, bias_number, iterations, save_embedding_p
     embedings = model.get_embeddings()
 
     # save the data as the numpy form:
-    file_path = os.path.join(save_embedding_path, 'embeddings.npy')
+    filename = "embeddings" + str(embed_size) + "_b_" + str(bias_number) + "_i_" + str(iterations)
+    file_path = os.path.join(save_embedding_path, filename + '.npy')
     np.save(file_path, embedings)
     # save the data as the txt form:
-    file_path = os.path.join(save_embedding_path, 'embeddings.txt')
+    file_path = os.path.join(save_embedding_path, filename + '.txt')
     with open(file_path, 'w') as f:
         number_word = len(embedings)
         for i in range(number_word):
@@ -69,11 +73,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'pranking algorithm')
     parser.add_argument('--batch_size', default = 200)
     parser.add_argument('--embed_size', default = 300)
-    parser.add_argument('--bias_number', default = 5)
-    parser.add_argument('--iterations', default = 5000)
+    parser.add_argument('--bias_number', default = 10)
+    parser.add_argument('--iterations', default = 50)
     parser.add_argument('--save_embedding_path', default = "/mnt/lustre/yankun/learning_to_rank/embedding")
 
     args = parser.parse_args()
+    # import pdb; pdb.set_trace()
 
     # params = EasyDict(args)
     train_save(args.batch_size, args.embed_size, args.bias_number, args.iterations, args.save_embedding_path)
