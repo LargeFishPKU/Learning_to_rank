@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import os
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.nn.init import xavier_normal
 
 
@@ -18,6 +19,7 @@ class PRank(nn.Module):
         # self.in_embed.weight = xavier_normal(self.in_embed.weight)
 
         self.in_embed = torch.rand(self.word_number, self.embed_size, requires_grad=False)
+        self.in_embed = F.normalize(self.in_embed, p = 2, dim = 1, eps=1e-12)
 
         # self.in_bias = nn.Embedding(self.word_number, self.bias_number)
         # self.in_bias.weight[:] = 0
@@ -73,8 +75,9 @@ class PRank(nn.Module):
         # self.in_embed.weight[context_id] = self.in_embed.weight[context_id] + weight_update
         # self.in_bias.weight[context_id] = self.in_bias.weight[context_id] - bias_update
         self.in_embed[context_id] = self.in_embed[context_id] + weight_update
+        self.l2_norm(context_id)
         self.in_bias[context_id] = self.in_bias[context_id] - bias_update
-    
+
         return acc
 
     def generate_yt(self,batch_size, bias_number, labels):
@@ -118,6 +121,10 @@ class PRank(nn.Module):
         # return self.in_embed.weight.data.cpu().numpy() + self.out_embed.weight.data.cpu().numpy()
         # return self.in_embed.weight.data.cpu().numpy()
         return self.in_embed.data.cpu().numpy()
+
+    def l2_norm(self, id):
+        self.in_embed[id] = F.normalize(self.in_embed[id], p = 2, dim = 0, eps=1e-12)
+
 
 def dot_product(x, y):
     # x: N * D
